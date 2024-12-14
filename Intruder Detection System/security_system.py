@@ -40,7 +40,7 @@ class SecuritySystem:
 
     def trigger_alarm(self, detection_time):
         """ Simulate the triggering of an alarm when an intruder is detected. """
-        print(f"ALERT: Intruder detected at {detection_time}!")
+        print("ALERT: Intruder detected at {}!".format(detection_time))
         # You can extend this to send notifications, emails, or actually trigger a sound alarm.
 
     def check_logs(self):
@@ -48,9 +48,35 @@ class SecuritySystem:
         self.cursor.execute("SELECT * FROM intruder_log ORDER BY detection_time DESC")
         logs = self.cursor.fetchall()
         for log in logs:
-            print(f"Time: {log[1]}, Status: {log[2]}")
+            print("Time: {}, Status: {}".format(log[1], log[2]))
 
     def close(self):
         """ Close the database connection. """
         self.conn.close()
 
+import time
+from security_system import SecuritySystem
+
+def main():
+    system = SecuritySystem()
+    last_log_check_time = time.time()
+
+    try:
+        while True:
+            print("\nMonitoring for Intruders...")
+            system.detect_intruder()  # Detect intruders at random intervals
+            time.sleep(5)  # Wait for 5 seconds before checking again
+
+            # Optionally, show logs every 10 seconds (based on elapsed time)
+            if time.time() - last_log_check_time >= 10:
+                print("\nIntruder Detection Logs:")
+                system.check_logs()
+                last_log_check_time = time.time()  # Update the last log check time
+
+    except KeyboardInterrupt:
+        print("\nSecurity System Shutting Down.")
+    finally:
+        system.close()
+
+if __name__ == "__main__":
+    main()

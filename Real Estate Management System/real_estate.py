@@ -62,7 +62,7 @@ def search_property():
     conn.close()
 
     if results:
-        result_message = "\n".join([f"Address: {row[1]}, Price: {row[2]}, Owner: {row[3]}" for row in results])
+        result_message = "\n".join(["Address: {}, Price: {}, Owner: {}".format(row[1], row[2], row[3]) for row in results])
         messagebox.showinfo("Search Results", result_message)
     else:
         messagebox.showerror("No Results", "No properties found matching that address.")
@@ -77,7 +77,7 @@ def list_all_properties():
     conn.close()
 
     if results:
-        result_message = "\n".join([f"Address: {row[1]}, Price: {row[2]}, Owner: {row[3]}" for row in results])
+        result_message = "\n".join(["Address: {}, Price: {}, Owner: {}".format(row[1], row[2], row[3]) for row in results])
         messagebox.showinfo("All Properties", result_message)
     else:
         messagebox.showinfo("No Properties", "No properties available in the system.")
@@ -89,6 +89,7 @@ app.title("Real Estate Management System")
 # Frames for Add Property and Search Property
 add_property_frame = tk.Frame(app, padx=10, pady=10)
 search_property_frame = tk.Frame(app, padx=10, pady=10)
+list_property_frame = tk.Frame(app, padx=10, pady=10)
 
 # Add Property Section
 tk.Label(add_property_frame, text="Add Property", font=("Arial", 16)).pack(pady=5)
@@ -116,19 +117,42 @@ search_address_entry.pack(pady=5)
 search_button = tk.Button(search_property_frame, text="Search", command=search_property)
 search_button.pack(pady=10)
 
-switch_to_add_button = tk.Button(search_property_frame, text="Add Property", command=lambda: show_add_property_page())
-switch_to_add_button.pack()
+# List All Properties Section
+tk.Label(list_property_frame, text="List All Properties", font=("Arial", 16)).pack(pady=5)
+list_button = tk.Button(list_property_frame, text="Show All Properties", command=list_all_properties)
+list_button.pack(pady=10)
 
 # Switch between frames
 def show_add_property_page():
+    add_property_frame.pack(fill='both', expand=True)
     search_property_frame.pack_forget()
-    add_property_frame.pack()
+    list_property_frame.pack_forget()
 
 def show_search_property_page():
+    search_property_frame.pack(fill='both', expand=True)
     add_property_frame.pack_forget()
-    search_property_frame.pack()
+    list_property_frame.pack_forget()
+
+def show_list_property_page():
+    list_property_frame.pack(fill='both', expand=True)
+    add_property_frame.pack_forget()
+    search_property_frame.pack_forget()
 
 # Initialize database and start the app
 setup_database()
 show_add_property_page()  # Start with the Add Property page
+
+# Navigation Buttons
+nav_frame = tk.Frame(app)
+nav_frame.pack(pady=20)
+
+add_property_nav_button = tk.Button(nav_frame, text="Add Property", command=show_add_property_page)
+add_property_nav_button.pack(side='left', padx=10)
+
+search_property_nav_button = tk.Button(nav_frame, text="Search Property", command=show_search_property_page)
+search_property_nav_button.pack(side='left', padx=10)
+
+list_property_nav_button = tk.Button(nav_frame, text="List Properties", command=show_list_property_page)
+list_property_nav_button.pack(side='left', padx=10)
+
 app.mainloop()

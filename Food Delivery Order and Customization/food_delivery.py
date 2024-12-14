@@ -7,11 +7,12 @@ def setup_database():
     conn = sqlite3.connect("food_delivery.db")
     cursor = conn.cursor()
 
-    # Create orders table
+    # Create orders table if not exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             customer_name TEXT NOT NULL,
+            customer_address TEXT NOT NULL DEFAULT '',
             food_item TEXT NOT NULL,
             customizations TEXT,
             status TEXT NOT NULL
@@ -20,24 +21,41 @@ def setup_database():
     conn.commit()
     conn.close()
 
+# Ensure customer_address column exists
+def add_customer_address_column():
+    conn = sqlite3.connect("food_delivery.db")
+    cursor = conn.cursor()
+
+    # Check if 'customer_address' column exists
+    cursor.execute("PRAGMA table_info(orders);")
+    columns = [column[1] for column in cursor.fetchall()]
+
+    # Add the 'customer_address' column if it doesn't exist
+    if 'customer_address' not in columns:
+        cursor.execute("ALTER TABLE orders ADD COLUMN customer_address TEXT NOT NULL DEFAULT ''")
+    
+    conn.commit()
+    conn.close()
+
 # Add order to database
 def add_order():
     customer_name = name_entry.get()
+    customer_address = address_entry.get()  # New address field
     food_item = food_item_entry.get()
     customizations = customizations_entry.get()
     status = "Pending"  # Default status is 'Pending'
 
-    if not customer_name or not food_item:
-        messagebox.showerror("Error", "Customer Name and Food Item are required!")
+    if not customer_name or not food_item or not customer_address:
+        messagebox.showerror("Error", "Customer Name, Address, and Food Item are required!")
         return
 
     conn = sqlite3.connect("food_delivery.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO orders (customer_name, food_item, customizations, status)
-        VALUES (?, ?, ?, ?)
-    """, (customer_name, food_item, customizations, status))
+        INSERT INTO orders (customer_name, customer_address, food_item, customizations, status)
+        VALUES (?, ?, ?, ?, ?)
+    """, (customer_name, customer_address, food_item, customizations, status))
 
     conn.commit()
     conn.close()
@@ -47,10 +65,15 @@ def add_order():
     show_orders()
 
 # Show all orders
-def show_orders():
+def show_orders(status_filter=None):
     conn = sqlite3.connect("food_delivery.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM orders")
+
+    if status_filter:
+        cursor.execute("SELECT * FROM orders WHERE status = ?", (status_filter,))
+    else:
+        cursor.execute("SELECT * FROM orders")
+        
     orders = cursor.fetchall()
     conn.close()
 
@@ -59,12 +82,25 @@ def show_orders():
         order_listbox.insert(tk.END, "No orders placed yet.")
     else:
         for order in orders:
-            order_listbox.insert(tk.END, "{} - {}: {} (Customizations: {}) - Status: {}".format(
-                order[1], order[2], order[3], order[4], order[5]))
+            # Ensure that the number of columns in each order is correct
+            try:
+                if len(order) == 6:
+                    order_details = "{} - {}: {} (Customizations: {}) - Status: {} - Address: {}"
+                    order_listbox.insert(tk.END, order_details.format(
+                        order[1], order[2], order[3], order[4], order[5], order[6]))
+                elif len(order) == 5:
+                    # If no address, display a placeholder or omit it
+                    order_details = "{} - {}: {} (Customizations: {}) - Status: {} - Address: N/A"
+                    order_listbox.insert(tk.END, order_details.format(
+                        order[1], order[2], order[3], order[4], order[5], "N/A"))
+            except IndexError:
+                print("Error with order:", order)
+                print("Order index:", orders.index(order))
 
 # Clear input fields
 def clear_entries():
     name_entry.delete(0, tk.END)
+    address_entry.delete(0, tk.END)
     food_item_entry.delete(0, tk.END)
     customizations_entry.delete(0, tk.END)
 
@@ -112,6 +148,10 @@ tk.Label(add_order_frame, text="Customer Name:").pack(anchor="w")
 name_entry = tk.Entry(add_order_frame)
 name_entry.pack(pady=5)
 
+tk.Label(add_order_frame, text="Customer Address:").pack(anchor="w")
+address_entry = tk.Entry(add_order_frame)
+address_entry.pack(pady=5)
+
 tk.Label(add_order_frame, text="Food Item:").pack(anchor="w")
 food_item_entry = tk.Entry(add_order_frame)
 food_item_entry.pack(pady=5)
@@ -152,5 +192,6 @@ def show_view_orders_page():
 
 # Initialize database and start the app
 setup_database()
+add_customer_address_column()  # Ensure the 'customer_address' column exists
 show_add_order_page()  # Start with the add order page
 app.mainloop()

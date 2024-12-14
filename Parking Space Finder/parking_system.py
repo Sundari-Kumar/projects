@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+import time
 
 class ParkingSystem:
     def __init__(self):
@@ -32,7 +32,7 @@ class ParkingSystem:
         if available_spaces:
             print("Available Parking Spaces:")
             for space in available_spaces:
-                print(f"Space ID: {space[0]}, Vehicle Type: {space[1]}")
+                print("Space ID: {0}, Vehicle Type: {1}".format(space[0], space[1]))
         else:
             print("No available parking spaces at the moment.")
     
@@ -45,9 +45,9 @@ class ParkingSystem:
                 self.cursor.execute("""
                 UPDATE parking_spaces SET status = 'booked' WHERE id = ?""", (space_id,))
                 self.conn.commit()
-                print(f"Parking Space {space_id} has been booked successfully!")
+                print("Parking Space {0} has been booked successfully!".format(space_id))
             else:
-                print(f"Parking Space {space_id} is already booked!")
+                print("Parking Space {0} is already booked!".format(space_id))
         else:
             print("Invalid Parking Space ID!")
 
@@ -57,9 +57,48 @@ class ParkingSystem:
         all_spaces = self.cursor.fetchall()
         print("Parking Spaces Status:")
         for space in all_spaces:
-            print(f"Space ID: {space[0]}, Vehicle Type: {space[1]}, Status: {space[2]}")
+            print("Space ID: {0}, Vehicle Type: {1}, Status: {2}".format(space[0], space[1], space[2]))
 
     def close(self):
         """ Close the database connection """
         self.conn.close()
 
+def main():
+    system = ParkingSystem()
+
+    # Add some parking spaces to the system
+    system.add_parking_space("Car")
+    system.add_parking_space("Truck")
+    system.add_parking_space("Motorcycle")
+    
+    while True:
+        print("\nParking System")
+        print("1. View Available Parking Spaces")
+        print("2. Book a Parking Space")
+        print("3. View All Parking Spaces Status")
+        print("4. Exit")
+        
+        choice = raw_input("Enter your choice: ")
+
+        if choice == '1':
+            system.view_available_spaces()
+        elif choice == '2':
+            try:
+                space_id = int(raw_input("Enter Parking Space ID to book: "))
+                system.book_parking_space(space_id)
+            except ValueError:
+                print("Invalid input. Please enter a valid Parking Space ID.")
+        elif choice == '3':
+            system.view_parking_status()
+        elif choice == '4':
+            print("Exiting the system.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+        
+        time.sleep(2)  # Adding a brief pause before next action.
+
+    system.close()
+
+if __name__ == "__main__":
+    main()

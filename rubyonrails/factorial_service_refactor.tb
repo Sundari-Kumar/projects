@@ -1,0 +1,14 @@
+class FactorialService
+  def calculate(n)
+    validate_input(n)
+    (1..n).reduce(1, :*)
+  end
+
+  private
+
+  def validate_input(n)
+    unless n.is_a?(Integer) && n >= 0
+      raise ArgumentError, "Input must be a non-negative integer"
+    end
+  end
+end

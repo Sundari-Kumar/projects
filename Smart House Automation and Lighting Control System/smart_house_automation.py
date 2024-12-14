@@ -2,27 +2,32 @@ import sqlite3
 import Tkinter as tk
 import tkMessageBox as messagebox
 import datetime
+import time
+import threading
 
 # Database setup
 def setup_database():
     conn = sqlite3.connect("smart_house.db")
     cursor = conn.cursor()
-    
-    # Create table for storing light status
+
+    # Check if the 'lights' table exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS lights (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             room_name TEXT NOT NULL,
             light_status TEXT NOT NULL,
-            timer TEXT
+            timer TEXT,
+            scheduled_time TEXT  -- Adding the new column here
         )
     """)
     
+    # Commit changes and close the connection
     conn.commit()
     conn.close()
 
+
 # Turn lights on or off
-def control_lights(room_name, status, timer=None):
+def control_lights(room_name, status, timer=None, scheduled_time=None):
     conn = sqlite3.connect("smart_house.db")
     cursor = conn.cursor()
 
@@ -33,20 +38,54 @@ def control_lights(room_name, status, timer=None):
     if result:
         cursor.execute("""
             UPDATE lights
-            SET light_status = ?, timer = ?
+            SET light_status = ?, timer = ?, scheduled_time = ?
             WHERE room_name = ?
-        """, (status, timer, room_name))
+        """, (status, timer, scheduled_time, room_name))
     else:
         cursor.execute("""
-            INSERT INTO lights (room_name, light_status, timer)
-            VALUES (?, ?, ?)
-        """, (room_name, status, timer))
+            INSERT INTO lights (room_name, light_status, timer, scheduled_time)
+            VALUES (?, ?, ?, ?)
+        """, (room_name, status, timer, scheduled_time))
 
     conn.commit()
     conn.close()
 
     messagebox.showinfo("Success", "{} light turned {}!".format(room_name, status))
     show_light_status()
+
+# Schedule lights to turn on or off at a specific time
+def schedule_light(room_name, status, scheduled_time):
+    conn = sqlite3.connect("smart_house.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE lights
+        SET light_status = ?, scheduled_time = ?
+        WHERE room_name = ?
+    """, (status, scheduled_time, room_name))
+
+    conn.commit()
+    conn.close()
+
+    messagebox.showinfo("Scheduled", "Light for {} is scheduled to turn {} at {}".format(room_name, status, scheduled_time))
+    show_light_status()
+
+# Timer countdown logic
+def start_timer(room_name, timer):
+    try:
+        timer = int(timer)
+    except ValueError:
+        messagebox.showerror("Invalid Timer", "Timer must be a valid number!")
+        return
+
+    if timer > 0:
+        for i in range(timer, 0, -1):
+            time.sleep(60)  # Wait for 1 minute
+            print("Timer for {}: {} minutes remaining".format(room_name, i))
+
+        control_lights(room_name, 'Off', timer=None)  # Automatically turn off the light after the timer ends
+    else:
+        messagebox.showerror("Invalid Timer", "Timer must be greater than 0!")
 
 # Show current light statuses
 def show_light_status():
@@ -67,6 +106,18 @@ def show_light_status():
 def clear_entries():
     room_name_entry.delete(0, tk.END)
     timer_entry.delete(0, tk.END)
+
+# Delete light entry
+def delete_light(room_name):
+    conn = sqlite3.connect("smart_house.db")
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM lights WHERE room_name = ?", (room_name,))
+    conn.commit()
+    conn.close()
+
+    messagebox.showinfo("Deleted", "{} light entry has been removed.".format(room_name))
+    show_light_status()
 
 # GUI setup
 app = tk.Tk()
@@ -102,6 +153,21 @@ light_listbox.pack(pady=5)
 view_lights_button = tk.Button(view_lights_frame, text="View All Lights", command=show_light_status)
 view_lights_button.pack(pady=10)
 
+# Scheduling light control
+tk.Label(light_control_frame, text="Schedule Light Control (Turn On/Off at Specific Time)").pack(pady=10)
+scheduled_time_entry = tk.Entry(light_control_frame)
+scheduled_time_entry.pack(pady=5)
+
+schedule_on_button = tk.Button(light_control_frame, text="Schedule On", command=lambda: schedule_light(room_name_entry.get(), 'On', scheduled_time_entry.get()))
+schedule_on_button.pack(pady=5)
+
+schedule_off_button = tk.Button(light_control_frame, text="Schedule Off", command=lambda: schedule_light(room_name_entry.get(), 'Off', scheduled_time_entry.get()))
+schedule_off_button.pack(pady=5)
+
+# Delete light entry
+delete_button = tk.Button(view_lights_frame, text="Delete Light Entry", command=lambda: delete_light(room_name_entry.get()))
+delete_button.pack(pady=5)
+
 # Switch between frames
 def show_light_control_page():
     view_lights_frame.pack_forget()
@@ -114,4 +180,15 @@ def show_view_lights_page():
 # Initialize database and start the app
 setup_database()
 show_light_control_page()  # Start with the light control page
+
+# Navigation buttons (to switch between pages)
+nav_frame = tk.Frame(app)
+nav_frame.pack(pady=20)
+
+control_button = tk.Button(nav_frame, text="Control Lights", command=show_light_control_page)
+control_button.pack(side='left', padx=10)
+
+view_button = tk.Button(nav_frame, text="View Light Status", command=show_view_lights_page)
+view_button.pack(side='left', padx=10)
+
 app.mainloop()
