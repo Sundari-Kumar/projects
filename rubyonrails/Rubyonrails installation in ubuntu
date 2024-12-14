@@ -1,0 +1,126 @@
+1. Update System Packages
+
+Before installing anything, ensure your system packages are up to date:
+
+sudo apt update && sudo apt upgrade -y
+
+
+---
+
+2. Install Required Dependencies
+
+Install dependencies required for Ruby and Rails:
+
+sudo apt install curl gnupg build-essential git libssl-dev libreadline-dev zlib1g-dev libsqlite3-dev sqlite3 -y
+
+
+---
+
+3. Install Ruby
+
+Ruby on Rails requires Ruby to be installed. Follow these steps to install Ruby:
+
+(a) Install rbenv (Ruby Version Manager):
+
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+source ~/.bashrc
+
+(b) Install ruby-build (For Managing Ruby Versions):
+
+git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+(c) Install Ruby:
+
+Check the latest stable Ruby version from Ruby's official site, then install it (e.g., 3.2.2):
+
+rbenv install 3.2.2
+rbenv global 3.2.2
+
+Verify the Ruby installation:
+
+ruby -v
+
+
+---
+
+4. Install Bundler
+
+Bundler manages Ruby gems. Install it using:
+
+gem install bundler
+
+
+---
+
+5. Install Node.js and Yarn
+
+Rails requires a JavaScript runtime. Install Node.js and Yarn:
+
+(a) Install Node.js:
+
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+sudo apt install -y nodejs
+
+(b) Install Yarn:
+
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+sudo apt update && sudo apt install yarn
+
+
+---
+
+6. Install Rails
+
+Now, install the Rails gem:
+
+gem install rails
+
+Verify the installation:
+
+rails -v
+
+
+
+
+1. Update the system:
+
+sudo apt update && sudo apt upgrade -y
+
+
+2. Install dependencies:
+
+sudo apt install curl gnupg build-essential git libssl-dev libreadline-dev zlib1g-dev libsqlite3-dev sqlite3 -y
+
+
+3. Install rbenv and Ruby:
+
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+rbenv install 3.2.2
+rbenv global 3.2.2
+gem install bundler
+
+
+4. Install Node.js and Yarn:
+
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+sudo apt install -y nodejs
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+sudo apt update && sudo apt install yarn
+
+
+5. Install Rails:
+
+gem install rails
+
+
+6. Create a Rails app:
+
+rails new myapp
+cd myapp
+bin/rails server
+
